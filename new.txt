@@ -1,0 +1,150 @@
+\section{Robust and Shrinkage-Based Peer-Group Distance}
+
+\subsection{Data and Notation}
+
+Let
+\[
+X_i \in \mathbb{R}^d, \quad i = 1,\dots,n
+\]
+denote the feature vector of customer $i$ in a fixed product--segment--month, where $n \gg d$.
+The data matrix is given by
+\[
+X =
+\begin{bmatrix}
+X_1^\top \\
+X_2^\top \\
+\vdots \\
+X_n^\top
+\end{bmatrix}
+\in \mathbb{R}^{n \times d}.
+\]
+
+\subsection{Distributional Assumption}
+
+Customer behavior is modeled using a contamination framework:
+\begin{equation}
+X \sim (1-\varepsilon)F + \varepsilon G,
+\quad 0 \le \varepsilon < 0.5,
+\end{equation}
+where $F$ is an elliptically symmetric inlier distribution and $G$ is an arbitrary contamination distribution.
+An elliptical representation of $F$ is:
+\begin{equation}
+X = \mu + A Z,
+\quad AA^\top = \Sigma,
+\quad Z \sim \text{spherical}, \; \mathbb{E}[Z] = 0.
+\end{equation}
+
+\subsection{Robust Location Estimation}
+
+For each feature $j \in \{1,\dots,d\}$, the robust location estimator is defined as the componentwise median:
+\begin{equation}
+\hat{\mu}_j = \mathrm{median}\{X_{1j}, X_{2j}, \dots, X_{nj}\}.
+\end{equation}
+The median has a breakdown point of $50\%$ and is robust under arbitrary contamination.
+
+\subsection{Robust Scale Estimation}
+
+For each feature $j$, the scale is estimated using the Median Absolute Deviation (MAD):
+\begin{equation}
+\hat{\sigma}_j =
+\mathrm{MAD}(X_{\cdot j})
+=
+\mathrm{median}_{i}
+\left|
+X_{ij} - \hat{\mu}_j
+\right|.
+\end{equation}
+For Gaussian consistency, the scale may optionally be corrected as:
+\begin{equation}
+\hat{\sigma}_j \leftarrow 1.4826 \cdot \hat{\sigma}_j.
+\end{equation}
+
+\subsection{Robust Standardization}
+
+Each observation is standardized componentwise:
+\begin{equation}
+Z_{ij} =
+\frac{X_{ij} - \hat{\mu}_j}{\hat{\sigma}_j},
+\quad i = 1,\dots,n,\; j = 1,\dots,d.
+\end{equation}
+Define the standardized vector:
+\begin{equation}
+Z_i =
+\begin{bmatrix}
+Z_{i1} & \cdots & Z_{id}
+\end{bmatrix}^\top.
+\end{equation}
+
+\subsection{Empirical Covariance of Standardized Data}
+
+The empirical covariance matrix of the standardized observations is:
+\begin{equation}
+S =
+\frac{1}{n}
+\sum_{i=1}^n
+Z_i Z_i^\top.
+\end{equation}
+While $S$ captures multivariate dependence, it may be unstable under contamination and finite samples.
+
+\subsection{Shrinkage Covariance Estimation}
+
+To stabilize the covariance estimate, linear shrinkage toward the identity matrix is applied:
+\begin{equation}
+\hat{\Sigma}
+=
+(1-\gamma) S + \gamma I_d,
+\quad 0 < \gamma < 1,
+\end{equation}
+where $I_d$ is the $d \times d$ identity matrix.
+
+\subsubsection{Properties}
+
+The shrinkage covariance estimator satisfies:
+\begin{align}
+\hat{\Sigma} &\succ 0, \label{eq:pd} \\
+\lambda_{\min}(\hat{\Sigma}) &\ge \gamma, \\
+\lambda_{\max}(\hat{\Sigma}) &\le (1-\gamma)\lambda_{\max}(S) + \gamma.
+\end{align}
+Thus, $\hat{\Sigma}$ is always invertible and numerically stable.
+
+\subsection{Peer-Group Robust Distance}
+
+The peer-group distance for customer $i$ is defined as:
+\begin{equation}
+D_i^{\mathrm{peer}}
+=
+Z_i^\top
+\hat{\Sigma}^{-1}
+Z_i.
+\end{equation}
+This is a regularized Mahalanobis distance computed on robustly standardized data.
+
+\subsection{Asymptotic Distribution}
+
+Under the inlier distribution $F$, the standardized observations satisfy:
+\begin{equation}
+Z_i \xrightarrow{d} \mathcal{N}(0, I_d).
+\end{equation}
+By Slutsky's theorem,
+\begin{equation}
+D_i^{\mathrm{peer}} \xrightarrow{d} \chi^2_d.
+\end{equation}
+
+\subsection{Decision Rule}
+
+For a significance level $\alpha$, a customer is flagged as anomalous if:
+\begin{equation}
+D_i^{\mathrm{peer}} > \chi^2_{d,\,1-\alpha}.
+\end{equation}
+
+\subsection{Computational Complexity}
+
+The overall computational complexity is:
+\begin{equation}
+O(nd^2),
+\end{equation}
+requiring a single pass over the data and no iterative refinement, making the approach suitable for large-scale populations.
+
+\subsection{Summary}
+
+The robust and shrinkage-based 
