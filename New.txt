@@ -1,0 +1,111 @@
+\subsection{Normality Testing of Monthly Behavioral Distributions}
+
+Prior to adopting parametric modeling assumptions, the empirical distributions of monthly behavioral features were evaluated for consistency with the Gaussian distribution. This assessment was conducted separately for customer self-behavior distributions and corresponding peer-group behavioral distributions. The objective was to determine whether Gaussian assumptions are statistically justified for downstream modeling.
+
+\subsubsection{Data Description}
+
+The underlying dataset consists of customer-level transactional and behavioral aggregates observed over monthly intervals. For each customer, multiple behavioral channels are recorded, where each channel represents a distinct transaction modality (e.g., cash withdrawal, digital payments, merchant transactions). 
+
+For a given customer $c$ and month $m$, the data can be represented as a feature vector:
+\[
+\mathbf{X}_{c,m} = \left(x_{c,m}^{(1)}, x_{c,m}^{(2)}, \dots, x_{c,m}^{(K)}\right)
+\]
+where $K$ denotes the number of behavioral channels and $x_{c,m}^{(k)}$ denotes the aggregated transaction volume or frequency for channel $k$ in month $m$.
+
+Peer-group distributions are constructed by grouping customers into homogeneous segments based on shared attributes (e.g., business category or activity profile). For each peer group $g$ and month $m$, the corresponding distribution is:
+\[
+\mathbf{P}_{g,m} = \left(p_{1,m}^{(k)}, p_{2,m}^{(k)}, \dots, p_{N_g,m}^{(k)}\right)
+\]
+where $N_g$ is the number of customers in peer group $g$ and $k$ indexes the behavioral channel.
+
+Empirically, the monthly behavioral features exhibit the following characteristics:
+\begin{itemize}
+    \item Strong right-skewness due to the presence of high-activity customers,
+    \item Heavy-tailed behavior reflecting rare but extreme transaction volumes,
+    \item Zero-inflation for certain channels in low-activity months,
+    \item Heteroscedasticity across months driven by seasonality and business cycles.
+\end{itemize}
+
+These structural properties suggest that Gaussian assumptions may not be naturally satisfied by the raw data.
+
+\subsubsection{Statistical Tests}
+
+Two standard goodness-of-fit tests were employed:
+
+\paragraph{Shapiro--Wilk Test.}
+For a given monthly sample $X_m = \{x_1, x_2, \dots, x_n\}$, the Shapiro--Wilk test evaluates the null hypothesis:
+\[
+H_0: X_m \sim \mathcal{N}(\mu, \sigma^2)
+\]
+against the alternative that the sample does not follow a normal distribution. The test statistic is defined as:
+\[
+W = \frac{\left( \sum_{i=1}^{n} a_i x_{(i)} \right)^2}{\sum_{i=1}^{n} (x_i - \bar{x})^2}
+\]
+where $x_{(i)}$ are order statistics and $a_i$ are constants derived from the expected values of order statistics of a normal distribution.
+
+\paragraph{Anderson--Darling Test.}
+The Anderson--Darling test places higher weight on tail deviations and is defined as:
+\[
+A^2 = -n - \frac{1}{n} \sum_{i=1}^{n} \left[ (2i - 1)\left( \ln F(x_{(i)}) + \ln(1 - F(x_{(n+1-i)})) \right) \right]
+\]
+where $F(\cdot)$ is the cumulative distribution function of the fitted normal distribution. The null hypothesis is identical:
+\[
+H_0: X_m \sim \mathcal{N}(\mu, \sigma^2)
+\]
+
+Both tests were applied to monthly samples for each behavioral channel and customer segment.
+
+\subsubsection{Evaluation Across Significance Levels}
+
+Rather than fixing a single significance level, the tests were evaluated across a grid of significance values $\alpha \in [0.01, 0.20]$. For each $\alpha$, the proportion of monthly samples for which the null hypothesis of normality was rejected was computed:
+\[
+\text{Failure Rate}(\alpha) = \frac{1}{M} \sum_{m=1}^{M} \mathbb{I}(p_m < \alpha)
+\]
+where $p_m$ denotes the test p-value for month $m$, $M$ is the total number of months tested, and $\mathbb{I}(\cdot)$ is the indicator function.
+
+This procedure was conducted separately for:
+\begin{itemize}
+    \item Self-behavior monthly distributions
+    \item Peer-group monthly distributions
+\end{itemize}
+and for both Shapiro--Wilk and Anderson--Darling tests.
+
+\subsubsection{Results}
+
+The failure-rate-versus-$\alpha$ curves exhibited a monotonic increase across all channels and customer segments. For both statistical tests, a substantial fraction of monthly distributions rejected the null hypothesis even at low significance levels (e.g., $\alpha = 0.05$). This behavior was observed consistently for both self and peer distributions.
+
+In particular, the Anderson--Darling test exhibited systematically higher rejection rates relative to Shapiro--Wilk, reflecting pronounced deviations in the tails of the empirical distributions. This indicates the presence of skewness, heavy-tailed behavior, and potential multimodality in monthly transactional aggregates.
+
+Formally, for most months and channels:
+\[
+p_m < \alpha \quad \Rightarrow \quad H_0 \text{ rejected}
+\]
+implying that the assumption
+\[
+X_m \sim \mathcal{N}(\mu, \sigma^2)
+\]
+is not statistically supported.
+
+\subsubsection{Visual Evidence}
+
+Figures~\ref{fig:self_fail_alpha} and~\ref{fig:peer_fail_alpha} present the empirical failure rate of the normality tests as a function of the significance level $\alpha$ for self and peer distributions, respectively. Each curve corresponds to one of the applied tests.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{self_fail_vs_alpha.png}
+    \caption{Failure Rate vs Significance Level ($\alpha$) for Monthly Self-Behavior Distributions using Shapiro--Wilk and Anderson--Darling Tests}
+    \label{fig:self_fail_alpha}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{peer_fail_vs_alpha.png}
+    \caption{Failure Rate vs Significance Level ($\alpha$) for Monthly Peer-Group Distributions using Shapiro--Wilk and Anderson--Darling Tests}
+    \label{fig:peer_fail_alpha}
+\end{figure}
+
+\subsubsection{Implications for Model Design}
+
+The consistent rejection of the Gaussian hypothesis across both self and peer distributions demonstrates that parametric modeling approaches relying on normality assumptions (e.g., Mahalanobis distance under classical covariance estimation) are not statistically justified in their standard form. 
+
+These results motivated the adoption of robust and non-parametric modeling techniques in subsequent stages of the framework, ensuring that distance computation and anomaly detection are resilient to skewed, heavy-tailed, and non-Gaussian behavioral patterns. This improves both model stability and interpretability under realistic transactional data characteristics.
