@@ -1,0 +1,119 @@
+\subsection{Normality Testing of Behavioral Distributions}
+
+Prior to adopting parametric modeling assumptions, the empirical distributions of behavioral features were evaluated for consistency with the Gaussian distribution. This assessment was conducted separately for customer self-behavior distributions constructed at a monthly level and for peer-group behavioral distributions constructed using yearly aggregated data. The objective was to determine whether Gaussian assumptions are statistically justified for downstream modeling.
+
+\subsubsection{Data Description}
+
+The underlying dataset consists of customer-level transactional and behavioral aggregates observed over time. For each customer, multiple behavioral channels are recorded, where each channel represents a distinct transaction modality (e.g., cash withdrawal, digital payments, merchant transactions).
+
+For the self-behavior case, monthly aggregated feature vectors are constructed as:
+\[
+\mathbf{X}_{c,m} = \left(x_{c,m}^{(1)}, x_{c,m}^{(2)}, \dots, x_{c,m}^{(K)}\right)
+\]
+where $x_{c,m}^{(k)}$ denotes the aggregated transaction volume or frequency for channel $k$ in month $m$, and $K$ denotes the number of behavioral channels.
+
+For the peer-group case, customers are grouped into homogeneous segments based on shared attributes (e.g., business category or activity profile). Instead of using monthly samples, yearly aggregated feature values are constructed for each customer:
+\[
+\mathbf{Y}_{c,y} = \left(y_{c,y}^{(1)}, y_{c,y}^{(2)}, \dots, y_{c,y}^{(K)}\right)
+\]
+where $y_{c,y}^{(k)}$ denotes the yearly aggregated transaction volume or frequency for channel $k$ in year $y$.
+
+Peer-group distributions are then formed for each channel $k$ and year $y$ as:
+\[
+\mathbf{P}_{g,y}^{(k)} = \left(y_{1,y}^{(k)}, y_{2,y}^{(k)}, \dots, y_{N_g,y}^{(k)}\right)
+\]
+where $N_g$ denotes the number of customers in peer group $g$.
+
+Empirically, the behavioral features exhibit the following structural properties:
+\begin{itemize}
+    \item Strong right-skewness due to the presence of high-activity customers,
+    \item Heavy-tailed behavior driven by rare but extreme transaction volumes,
+    \item Zero-inflation for certain channels during low-activity periods,
+    \item Heteroscedasticity across time driven by seasonality and business cycles.
+\end{itemize}
+
+These properties suggest that Gaussian assumptions may not naturally hold for either monthly or yearly aggregated behavioral data.
+
+\subsubsection{Statistical Tests}
+
+Two standard goodness-of-fit tests were employed:
+
+\paragraph{Shapiro--Wilk Test.}
+For a given sample $S = \{s_1, s_2, \dots, s_n\}$, the Shapiro--Wilk test evaluates the null hypothesis:
+\[
+H_0: S \sim \mathcal{N}(\mu, \sigma^2)
+\]
+The test statistic is given by:
+\[
+W = \frac{\left( \sum_{i=1}^{n} a_i s_{(i)} \right)^2}{\sum_{i=1}^{n} (s_i - \bar{s})^2}
+\]
+where $s_{(i)}$ are order statistics and $a_i$ are constants derived from the expected order statistics of a normal distribution.
+
+\paragraph{Anderson--Darling Test.}
+The Anderson--Darling test places higher weight on tail deviations and is defined as:
+\[
+A^2 = -n - \frac{1}{n} \sum_{i=1}^{n} \left[ (2i - 1)\left( \ln F(s_{(i)}) + \ln(1 - F(s_{(n+1-i)})) \right) \right]
+\]
+where $F(\cdot)$ is the cumulative distribution function of the fitted normal distribution.
+
+Both tests were applied to:
+\begin{itemize}
+    \item Monthly self-behavior samples $\mathbf{X}_{c,m}^{(k)}$
+    \item Yearly peer-group samples $\mathbf{P}_{g,y}^{(k)}$
+\end{itemize}
+for each behavioral channel $k$.
+
+\subsubsection{Evaluation Across Significance Levels}
+
+Rather than fixing a single significance level, the tests were evaluated across a grid of significance values $\alpha \in [0.01, 0.20]$. For each $\alpha$, the proportion of samples for which the null hypothesis of normality was rejected was computed:
+\[
+\text{Failure Rate}(\alpha) = \frac{1}{N} \sum_{i=1}^{N} \mathbb{I}(p_i < \alpha)
+\]
+where $p_i$ denotes the p-value of the test for sample $i$, $N$ denotes the total number of evaluated samples, and $\mathbb{I}(\cdot)$ is the indicator function.
+
+This procedure was conducted separately for:
+\begin{itemize}
+    \item Monthly self-behavior distributions
+    \item Yearly peer-group distributions
+\end{itemize}
+and for both Shapiro--Wilk and Anderson--Darling tests.
+
+\subsubsection{Results}
+
+The failure-rate-versus-$\alpha$ curves exhibited a monotonic increase across all behavioral channels. For both statistical tests, a substantial fraction of distributions rejected the null hypothesis even at low significance levels (e.g., $\alpha = 0.05$). This behavior was observed consistently for monthly self-behavior distributions and yearly peer-group distributions.
+
+The Anderson--Darling test exhibited systematically higher rejection rates relative to Shapiro--Wilk, indicating pronounced deviations in the tails of the empirical distributions. This reflects the presence of skewness, heavy-tailed behavior, and potential multimodality in both monthly and yearly aggregated transactional features.
+
+Formally, for most evaluated samples:
+\[
+p_i < \alpha \quad \Rightarrow \quad H_0 \text{ rejected}
+\]
+implying that the assumption
+\[
+S \sim \mathcal{N}(\mu, \sigma^2)
+\]
+is not statistically supported for the observed behavioral data.
+
+\subsubsection{Visual Evidence}
+
+Figures~\ref{fig:self_fail_alpha} and~\ref{fig:peer_fail_alpha} present the empirical failure rate of the normality tests as a function of the significance level $\alpha$ for monthly self-behavior distributions and yearly peer-group distributions, respectively.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{self_fail_vs_alpha.png}
+    \caption{Failure Rate vs Significance Level ($\alpha$) for Monthly Self-Behavior Distributions using Shapiro--Wilk and Anderson--Darling Tests}
+    \label{fig:self_fail_alpha}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{peer_fail_vs_alpha.png}
+    \caption{Failure Rate vs Significance Level ($\alpha$) for Yearly Peer-Group Distributions using Shapiro--Wilk and Anderson--Darling Tests}
+    \label{fig:peer_fail_alpha}
+\end{figure}
+
+\subsubsection{Implications for Model Design}
+
+The consistent rejection of the Gaussian hypothesis for both monthly self-behavior distributions and yearly peer-group distributions demonstrates that parametric modeling approaches relying on normality assumptions (e.g., classical Mahalanobis distance under Gaussian covariance estimation) are not statistically justified in their standard form.
+
+These findings motivated the adoption of robust and distribution-free modeling techniques in subsequent stages of the framework, ensuring that distance computation and anomaly detection remain stable under skewed, heavy-tailed, and non-Gaussian transactional behavior. This improves model reliability and interpretability under realistic operational data conditions.
